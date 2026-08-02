@@ -9,6 +9,7 @@ A compact filesharing desktop app for `croc`.
 - Node.js 20 or newer
 - `croc` available on `PATH`
 - Fedora Linux: `webkit2gtk4.0-devel` for the native WebView build
+- Debian/Ubuntu: `libwebkit2gtk-4.0-dev` for the native WebView build
 
 This workspace expects Go in `/usr/local/go/bin` and Wails in `$HOME/go/bin`. If a new shell cannot find them, reload your shell or run:
 
@@ -21,6 +22,9 @@ Install the Wails native WebView dependency with:
 ```bash
 # For Fedora Linux
 sudo dnf install -y webkit2gtk4.0-devel
+
+# For Debian or Ubuntu
+sudo apt install -y libwebkit2gtk-4.0-dev
 ```
 
 ## Development

@@ -17,6 +17,7 @@ type WailsGo = {
       StartReceive(code: string): Promise<TransferSnapshot>;
       CancelTransfer(id: string): Promise<boolean>;
       OpenFolder(path: string): Promise<void>;
+      ReportClientError(message: string): Promise<void>;
     };
   };
 };
@@ -42,6 +43,7 @@ export const bridge = {
   startReceive: (code: string) => app().StartReceive(code),
   cancelTransfer: (id: string) => app().CancelTransfer(id),
   openFolder: (path: string) => app().OpenFolder(path),
+  reportClientError: (message: string) => app().ReportClientError(message),
   copyText: async (text: string) => {
     if (window.runtime?.ClipboardSetText) await window.runtime.ClipboardSetText(text);
     else await navigator.clipboard.writeText(text);

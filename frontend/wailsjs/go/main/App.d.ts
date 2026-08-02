@@ -8,6 +8,8 @@ export function InspectPaths(arg1:Array<string>):Promise<Array<croc.FileItem>>;
 
 export function OpenFolder(arg1:string):Promise<void>;
 
+export function ReportClientError(arg1:string):Promise<void>;
+
 export function SelectFolder():Promise<Array<croc.FileItem>>;
 
 export function SelectPaths():Promise<Array<croc.FileItem>>;

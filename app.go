@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
-	"file-atlas/internal/croc"
+	"cendesk/internal/croc"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -37,8 +39,11 @@ func (a *App) SelectPaths() ([]croc.FileItem, error) {
 		CanCreateDirectories: false,
 		ShowHiddenFiles:      true,
 	})
-	if err != nil || len(paths) == 0 {
-		return nil, err
+	if err != nil {
+		return nil, userError("choose files", "The file picker could not be opened.", err)
+	}
+	if len(paths) == 0 {
+		return []croc.FileItem{}, nil
 	}
 	return a.InspectPaths(paths)
 }
@@ -49,8 +54,11 @@ func (a *App) SelectFolder() ([]croc.FileItem, error) {
 		CanCreateDirectories: false,
 		ShowHiddenFiles:      true,
 	})
-	if err != nil || path == "" {
-		return nil, err
+	if err != nil {
+		return nil, userError("choose folder", "The folder picker could not be opened.", err)
+	}
+	if path == "" {
+		return []croc.FileItem{}, nil
 	}
 	return a.InspectPaths([]string{path})
 }
@@ -60,7 +68,7 @@ func (a *App) InspectPaths(paths []string) ([]croc.FileItem, error) {
 	for _, path := range paths {
 		item, err := croc.InspectPath(path)
 		if err != nil {
-			return nil, err
+			return nil, userError("inspect selected path", "One or more selected files could not be added.", err)
 		}
 		items = append(items, item)
 	}
@@ -68,15 +76,23 @@ func (a *App) InspectPaths(paths []string) ([]croc.FileItem, error) {
 }
 
 func (a *App) StartSend(paths []string) (croc.Snapshot, error) {
-	return a.manager.StartSend(paths)
+	snapshot, err := a.manager.StartSend(paths)
+	if err != nil {
+		return croc.Snapshot{}, userError("start send", "The transfer could not be started.", err)
+	}
+	return snapshot, nil
 }
 
 func (a *App) StartReceive(code string) (croc.Snapshot, error) {
 	destination, err := downloadsDir()
 	if err != nil {
-		return croc.Snapshot{}, err
+		return croc.Snapshot{}, userError("prepare receive destination", "The receive folder is not available.", err)
 	}
-	return a.manager.StartReceive(code, destination)
+	snapshot, err := a.manager.StartReceive(code, destination)
+	if err != nil {
+		return croc.Snapshot{}, userError("start receive", "The transfer could not be started.", err)
+	}
+	return snapshot, nil
 }
 
 func (a *App) CancelTransfer(id string) bool {
@@ -85,10 +101,19 @@ func (a *App) CancelTransfer(id string) bool {
 
 func (a *App) OpenFolder(path string) error {
 	if _, err := os.Stat(path); err != nil {
-		return err
+		return userError("open destination folder", "The destination folder is not available.", err)
 	}
 	runtime.BrowserOpenURL(a.ctx, "file://"+filepath.Clean(path))
 	return nil
+}
+
+func (a *App) ReportClientError(message string) {
+	log.Printf("frontend error: %s", message)
+}
+
+func userError(action, message string, err error) error {
+	log.Printf("%s: %v", action, err)
+	return errors.New(message)
 }
 
 func downloadsDir() (string, error) {

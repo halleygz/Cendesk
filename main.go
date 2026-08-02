@@ -16,7 +16,7 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:     "File Atlas",
+		Title:     "Cendesk",
 		Width:     1080,
 		Height:    760,
 		MinWidth:  840,
@@ -25,8 +25,11 @@ func main() {
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 244, G: 244, B: 238, A: 1},
-		OnStartup:        app.Startup,
-		OnShutdown:       app.Shutdown,
+		DragAndDrop: &options.DragAndDrop{
+			DisableWebViewDrop: true,
+		},
+		OnStartup:  app.Startup,
+		OnShutdown: app.Shutdown,
 		Bind: []interface{}{
 			app,
 		},

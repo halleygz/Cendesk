@@ -1,3 +1,29 @@
-build/bin/
+# Go build and test artifacts
+*.test
+*.out
+coverage.out
+
+# Wails and frontend build output
+build/
 frontend/dist/
 frontend/node_modules/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Dependency and tool caches
+.gocache/
+.GOCACHE/
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+.opencode/
+

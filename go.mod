@@ -1,4 +1,4 @@
-module file-atlas
+module cendesk
 
 go 1.25.0
 

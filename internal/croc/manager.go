@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"sync"
@@ -109,13 +110,19 @@ func (m *Manager) start(direction Direction, args []string, extraEnv []string, d
 		cancel()
 		return Snapshot{}, err
 	}
-	parser := NewParser(direction, func(event Event) { m.record(id, event) })
+	parser := NewParser(direction, func(event Event) {
+		if event.Type == "warning" {
+			log.Printf("croc warning: %s", event.Message)
+			event.Message = "Croc reported a problem. Check the running app terminal for details."
+		}
+		m.record(id, event)
+	})
 	if err := command.Start(); err != nil {
 		cancel()
 		return Snapshot{}, err
 	}
-	go scanPipe(stdout, "stdout", parser, func(message string) { m.record(id, Event{Type: "warning", Message: message}) })
-	go scanPipe(stderr, "stderr", parser, func(message string) { m.record(id, Event{Type: "warning", Message: message}) })
+	go scanPipe(stdout, "stdout", parser, func(message string) { m.warn(id, message) })
+	go scanPipe(stderr, "stderr", parser, func(message string) { m.warn(id, message) })
 	go func() {
 		err := command.Wait()
 		parser.Flush("stderr")
@@ -150,10 +157,16 @@ func (m *Manager) finish(id string, err error, destination string) {
 		return
 	}
 	if err != nil {
-		m.record(id, Event{Type: "transfer-failed", Message: fmt.Sprintf("croc exited with %s", err.Error())})
+		log.Printf("croc transfer failed: %v", err)
+		m.record(id, Event{Type: "transfer-failed", Message: "Transfer could not be completed. Check your connection and try again."})
 		return
 	}
 	m.record(id, Event{Type: "transfer-completed", Destination: destination})
+}
+
+func (m *Manager) warn(id, message string) {
+	log.Printf("croc warning: %s", message)
+	m.record(id, Event{Type: "warning", Message: "Croc reported a problem. Check the running app terminal for details."})
 }
 
 func (m *Manager) record(id string, event Event) {
